@@ -74,6 +74,7 @@ class MainWindow(QMainWindow):
                 left_x=self._main_ui.from_doubleSpinBox.value(),
                 right_x=self._main_ui.to_doubleSpinBox.value(),
                 points_qnty=self._main_ui.func_points_spinBox.value(),
+                use_cones=self._main_ui.cones_checkBox.isChecked(),
             )
             func_item = QListWidgetItem(func_data["expr"])
             self._funcs_legend.addItem(func_item)
@@ -89,4 +90,6 @@ class MainWindow(QMainWindow):
             func_id,
             left_x=self._main_ui.from_doubleSpinBox.value(),
             right_x=self._main_ui.to_doubleSpinBox.value(),
+            use_cones=self._main_ui.cones_checkBox.isChecked(),
+            points_qnty=self._main_ui.func_points_spinBox.value(),
         )

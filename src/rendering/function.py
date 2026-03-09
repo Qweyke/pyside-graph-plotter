@@ -7,7 +7,6 @@ class Function:
     def __init__(
         self, symbolic, color, line, left_x: float, right_x: float, points_qnty: int
     ) -> None:
-        self.id = id(self)
 
         self.symbolic = symbolic
         self.color = color

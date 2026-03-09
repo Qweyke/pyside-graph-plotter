@@ -73,11 +73,7 @@ class PlotBuilder(QWidget):
         self._rebuild_axis_grid()
         self.update()
 
-    def _update_x_bounds(
-        self,
-        left_x,
-        right_x,
-    ):
+    def _update_x_bounds(self, left_x, right_x, points_qnty):
         if not math.isclose(left_x, self._mapper.x_min) or not math.isclose(
             right_x, self._mapper.x_max
         ):
@@ -87,7 +83,7 @@ class PlotBuilder(QWidget):
                 new_x_max=right_x,
             )
             for func in self.current_funcs:
-                func.recalculate(self._mapper.x_min, self._mapper.x_max)
+                func.recalculate(self._mapper.x_min, self._mapper.x_max, points_qnty)
 
     def _update_y_bounds(self):
         found_y_min, found_y_max = (
@@ -104,36 +100,33 @@ class PlotBuilder(QWidget):
             new_y_max=found_y_max,
         )
 
-    def add_function(self, symbolic, color, line, left_x, right_x, points_qnty):
-        self._update_x_bounds(left_x, right_x)
+    def add_function(
+        self, symbolic, color, line, left_x, right_x, points_qnty, use_cones
+    ):
+        self._update_x_bounds(left_x, right_x, points_qnty)
 
         new_func = Function(symbolic, color, line, left_x, right_x, points_qnty)
         self.current_funcs.append(new_func)
 
         self._update_y_bounds()
-        self._plot_functions()
+        self._plot_functions(use_cones)
 
         return id(new_func)
 
-    def remove_function(
-        self,
-        func_id,
-        left_x,
-        right_x,
-    ):
+    def remove_function(self, func_id, left_x, right_x, use_cones, points_qnty):
         for i, func in enumerate(self.current_funcs):
             if id(func) == func_id:
                 self.current_funcs.pop(i)
                 break
 
         if self.current_funcs:
-            self._update_x_bounds(left_x, right_x)
+            self._update_x_bounds(left_x, right_x, points_qnty)
             self._update_y_bounds()
-            self._plot_functions()
+            self._plot_functions(use_cones)
         else:
             self.clear()
 
-    def _plot_functions(self):
+    def _plot_functions(self, use_cones):
         self._cached_scene = QPixmap(self.width(), self.height())
         self._cached_scene.fill(self.canvas_style.background_color)
         self._rebuild_axis_grid()
@@ -155,7 +148,7 @@ class PlotBuilder(QWidget):
                 mapper=self._mapper,
                 scene=self._cached_scene,
                 color=func.color,
-                use_cones=False,
+                use_cones=use_cones,
             )
 
         self.update()

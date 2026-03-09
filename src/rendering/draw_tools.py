@@ -1,8 +1,18 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from PySide6.QtGui import QPainter, QPainterPath, Qt, QPen, QPixmap
+from PySide6.QtGui import (
+    QPainter,
+    QPainterPath,
+    QPolygonF,
+    QRadialGradient,
+    Qt,
+    QPen,
+    QPixmap,
+    QLinearGradient,
+)
 from PySide6.QtCore import QPointF, QRectF
 import numpy as np
+
 
 if TYPE_CHECKING:
     from calculations.coord_mapper import CoordinateMapper
@@ -82,45 +92,6 @@ def grid(scene: QPixmap, mapper: CoordinateMapper, theme: CanvasStyle):
     painter.end()
 
 
-# @staticmethod
-# def axis_labels(scene: QPixmap, mapper: CoordinateMapper, theme: CanvasStyle):
-#     # Setup painter
-#     painter = QPainter(scene)
-#     painter.setPen(theme.label_font_pen)
-#     painter.setViewport(mapper.viewport)
-
-#     metrics = painter.fontMetrics()
-#     label_text = f"{current_x:.2f}"
-
-#     # Labels
-#     label_rect = QRectF(
-#         bot_point.x() - (mapper.px_for_x * mapper.x_step) / 2,
-#         bot_point.y(),
-#         mapper.px_for_x * mapper.x_step,
-#         mapper.px_for_y,
-#     )
-#     print(f"X label box size: {label_rect.size()}")
-#     painter.drawText(
-#         label_rect,
-#         Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop,
-#         f"{current_x:.2f}",
-#     )
-
-#     label_rect = QRectF(
-#         left_point.x() - mapper.px_for_x * 1.1,
-#         left_point.y() - (mapper.y_step * mapper.px_for_y) / 2,
-#         mapper.px_for_x,
-#         mapper.y_step * mapper.px_for_y,
-#     )
-
-#     print(f"Y label box size: {label_rect.size()}")
-#     painter.drawText(
-#         label_rect,
-#         Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight,
-#         f"{current_y:.2f}",
-#     )
-
-
 def naught_lines_highlighting(
     scene: QPixmap, mapper: CoordinateMapper, theme: CanvasStyle
 ):
@@ -184,58 +155,69 @@ def user_bounds(
     painter.end()
 
 
-def function2(scene, mapper, color, x_vals, y_vals, use_cones=False):
-    try:
-        painter = QPainter(scene)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setPen(QPen(color, 2))
+def pseudo_cones_3d_style(
+    painter: QPainter,
+    mapper: CoordinateMapper,
+    x_vals,
+    y_vals,
+    color,
+):
+    if len(x_vals) < 2:
+        return
 
-        # 1. MASKING: Find where the math actually makes sense
-        # We find jumps where the function "flips" across a huge gap
-        y_diff = np.abs(np.diff(y_vals))
-        y_range = abs(mapper.y_max - mapper.y_min)
+    # вычисляем ширину конуса из шага по X
+    p1 = mapper.math_to_pixels(QPointF(x_vals[0], 0))
+    p2 = mapper.math_to_pixels(QPointF(x_vals[1], 0))
+    cone_width = abs(p2.x() - p1.x()) * 0.8
 
-        # A 'break' happens if: 1. Value is NaN/Inf OR 2. Massive sign-flip jump
-        is_finite = np.isfinite(y_vals)
-        # Check for sign flip + huge jump
-        is_jump = np.zeros(len(y_vals), dtype=bool)
-        is_jump[1:] = (np.sign(y_vals[1:]) != np.sign(y_vals[:-1])) & (
-            y_diff > y_range * 2
+    y_zero_px = mapper.math_to_pixels(QPointF(0, 0)).y()
+
+    for x, y in zip(x_vals, y_vals):
+
+        if not np.isfinite(y) or abs(y) < 1e-6:
+            continue
+
+        # вершина
+        tip_px = mapper.math_to_pixels(QPointF(x, y))
+
+        # центр основания
+        base_center_px = mapper.math_to_pixels(QPointF(x, 0))
+
+        left_x = base_center_px.x() - cone_width / 2
+        right_x = base_center_px.x() + cone_width / 2
+
+        # градиент освещения
+        grad = QLinearGradient(left_x, 0, right_x, 0)
+        grad.setColorAt(0.0, color.lighter(150))
+        grad.setColorAt(0.3, color)
+        grad.setColorAt(1.0, color.darker(150))
+
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(grad)
+
+        # тело конуса
+        cone_poly = QPolygonF(
+            [
+                tip_px,
+                QPointF(left_x, y_zero_px),
+                QPointF(right_x, y_zero_px),
+            ]
         )
 
-        # Valid points are finite AND not part of an asymptotic jump
-        valid_mask = is_finite & ~is_jump
+        painter.drawPolygon(cone_poly)
 
-        # 2. SEGMENTATION: Group indices into continuous chunks
-        # This is the "secret sauce" for 1/x
-        valid_idxs = np.where(valid_mask)[0]
-        if valid_idxs.size == 0:
-            return
+        # основание (эллипс)
+        ellipse_h = cone_width * 0.3
 
-        # Find where the indices are not consecutive
-        breaks = np.where(np.diff(valid_idxs) != 1)[0] + 1
-        segments = np.split(valid_idxs, breaks)
+        ellipse_rect = QRectF(
+            left_x,
+            y_zero_px - ellipse_h / 2,
+            cone_width,
+            ellipse_h,
+        )
 
-        # 3. RENDERING: Draw each chunk as a separate path
-        for seg in segments:
-            if len(seg) < 2:
-                continue
-
-            path = QPainterPath()
-            # Move to start of segment
-            p0 = mapper.math_to_pixels(QPointF(x_vals[seg[0]], y_vals[seg[0]]))
-            path.moveTo(p0)
-
-            # Line to the rest
-            for idx in seg[1:]:
-                p = mapper.math_to_pixels(QPointF(x_vals[idx], y_vals[idx]))
-                path.lineTo(p)
-
-            painter.drawPath(path)
-
-        painter.end()
-    except Exception as e:
-        print(f"Plot error: {e}")
+        painter.setBrush(color.darker(180))
+        painter.drawEllipse(ellipse_rect)
 
 
 def function(
@@ -257,6 +239,13 @@ def function(
 
         # Plotting cycle
         if use_cones:
+            pseudo_cones_3d_style(
+                painter=painter,
+                mapper=mapper,
+                x_vals=x_vals,
+                y_vals=y_vals,
+                color=color,
+            )
             # self._pseudo_cones(painter, x_vals, y_vals, color)
             pass
         else:
