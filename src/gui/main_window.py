@@ -1,17 +1,15 @@
 from PySide6.QtWidgets import (
     QMainWindow,
     QVBoxLayout,
-    QColorDialog,
     QDialog,
     QListWidgetItem,
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QPixmap, QIcon
+from PySide6.QtGui import QPixmap, QIcon
 from gui.add_func_dialog import AddFunctionDialog
-from gui.removable_list_view import RemovableListWidget
-from plot_core.function_resolver import FunctionResolver
-from plot_core.renderer import Renderer
-from res.mainwindow_ui import Ui_MainWindow
+from gui.legend_list_widget import LegendListWidget
+from rendering.plot_builder import PlotBuilder
+from gui.res.mainwindow_ui import Ui_MainWindow
 
 
 class MainWindow(QMainWindow):
@@ -24,26 +22,28 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Simple Plotter")
 
         # Create chart widget, insert it to GUI widget's space
-        self._renderer = Renderer(parent=self._main_ui.plot_wdgt)
+        self._PlotBuilder = PlotBuilder(parent=self._main_ui.plot_wdgt)
         layout = QVBoxLayout(self._main_ui.plot_wdgt)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._renderer)
+        layout.addWidget(self._PlotBuilder)
 
-        self.funcs_list = RemovableListWidget(parent=self._main_ui.plot_wdgt)
+        # Create legend widget, insert it to GUI widget's space
+        self._funcs_legend = LegendListWidget(parent=self._main_ui.plot_wdgt)
         layout = QVBoxLayout(self._main_ui.funcs_frame)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.funcs_list)
+        layout.addWidget(self._funcs_legend)
+        self._funcs_legend.func_deleted.connect(self._handle_del_function)
 
         # Connect btns
-        self._main_ui.clear_btn.clicked.connect(self._renderer.clear)
         self._main_ui.add_btn.clicked.connect(self._handle_add_function)
 
         # Interval values handling
         self.last_val_from = self._main_ui.from_doubleSpinBox.value()
-        self.last_val_to = self._main_ui.to_doubleSpinBox.value()
         self._main_ui.from_doubleSpinBox.editingFinished.connect(
             self._handle_from_change
         )
+
+        self.last_val_to = self._main_ui.to_doubleSpinBox.value()
         self._main_ui.to_doubleSpinBox.editingFinished.connect(self._handle_to_change)
 
     def _handle_from_change(self):
@@ -60,63 +60,33 @@ class MainWindow(QMainWindow):
         else:
             self.last_val_to = val
 
-    # def _plot_func(self):
-    #     self._renderer.plot_function(
-    #         func_name=self._main_ui.func_lineEdit.text(),
-    #         left_x=self._main_ui.from_doubleSpinBox.value(),
-    #         right_x=self._main_ui.to_doubleSpinBox.value(),
-    #         points=self._main_ui.func_points_spinBox.value(),
-    #         color=self.current_color,
-    #         use_cones=self._main_ui.cones_checkBox.isChecked(),
-    #     )
-
-    def get_active_plots(self):
-        active_funcs = []
-        for i in range(self.funcs_list.count()):
-            item = self.funcs_list.item(i)
-            active_funcs.append(item.data(Qt.ItemDataRole.UserRole))
-
-        print(active_funcs)
-        return active_funcs
-
     def _handle_add_function(self):
-        func_dialog = AddFunctionDialog()
+        addition_dialog = AddFunctionDialog()
 
-        if func_dialog.exec() == QDialog.DialogCode.Accepted:
-            func_gata = func_dialog.get_data()
-            func_item = QListWidgetItem(func_gata["expr"])
+        if addition_dialog.exec() == QDialog.DialogCode.Accepted:
 
-            _, _, x_vals, y_vals = FunctionResolver.get_prepared_values(
+            func_data = addition_dialog.get_data()
+
+            fid = self._PlotBuilder.add_function(
+                symbolic=func_data["expr"],
+                color=func_data["color"],
+                line=func_data["line"],
                 left_x=self._main_ui.from_doubleSpinBox.value(),
                 right_x=self._main_ui.to_doubleSpinBox.value(),
-                function_symbolic=func_gata["expr"],
                 points_qnty=self._main_ui.func_points_spinBox.value(),
             )
-
-            func_item.setData(
-                Qt.ItemDataRole.UserRole,
-                {
-                    "x_vals": x_vals,
-                    "y_vals": y_vals,
-                    "color": func_gata["color"],
-                    "line": func_gata["line"],
-                },
-            )
+            func_item = QListWidgetItem(func_data["expr"])
+            self._funcs_legend.addItem(func_item)
 
             # 4. Set the Marker Icon [cite: 21]
             pix = QPixmap(12, 12)
-            pix.fill(func_gata["color"])
+            pix.fill(func_data["color"])
             func_item.setIcon(QIcon(pix))
+            func_item.setData(Qt.ItemDataRole.UserRole, fid)
 
-            self.funcs_list.addItem(func_item)
-
-            self.get_active_plots()
-
-            self._renderer.plot_function(
-                func_name=func_gata["expr"],
-                left_x=self._main_ui.from_doubleSpinBox.value(),
-                right_x=self._main_ui.to_doubleSpinBox.value(),
-                points=self._main_ui.func_points_spinBox.value(),
-                color=func_gata["color"],
-                use_cones=self._main_ui.cones_checkBox.isChecked(),
-            )
+    def _handle_del_function(self, func_id):
+        self._PlotBuilder.remove_function(
+            func_id,
+            left_x=self._main_ui.from_doubleSpinBox.value(),
+            right_x=self._main_ui.to_doubleSpinBox.value(),
+        )

@@ -1,8 +1,10 @@
 from PySide6.QtWidgets import QListWidget, QWidget
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 
 
-class RemovableListWidget(QListWidget):
+class LegendListWidget(QListWidget):
+    func_deleted = Signal(object)
+
     def __init__(self, /, parent: QWidget) -> None:
         super().__init__(
             parent,
@@ -18,11 +20,9 @@ class RemovableListWidget(QListWidget):
             super().keyPressEvent(event)
 
     def remove_selected_items(self):
-        # Loop through selected items and remove them
         for item in self.selectedItems():
-            # takeItem requires a row index
+            func_id = item.data(Qt.ItemDataRole.UserRole)
             row = self.row(item)
             self.takeItem(row)
-            # In Python, 'del item' isn't strictly necessary for memory here,
-            # but it's good practice if you have heavy custom objects.
+            self.func_deleted.emit(func_id)
             del item

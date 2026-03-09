@@ -16,9 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QCheckBox, QDoubleSpinBox,
-    QFrame, QHBoxLayout, QLabel, QLineEdit,
-    QMainWindow, QPushButton, QSizePolicy, QSpinBox,
-    QVBoxLayout, QWidget)
+    QFrame, QHBoxLayout, QLabel, QMainWindow,
+    QPushButton, QSizePolicy, QSpinBox, QVBoxLayout,
+    QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -40,11 +40,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.clear_btn = QPushButton(self.centralwidget)
-        self.clear_btn.setObjectName(u"clear_btn")
-
-        self.verticalLayout.addWidget(self.clear_btn)
-
         self.cones_checkBox = QCheckBox(self.centralwidget)
         self.cones_checkBox.setObjectName(u"cones_checkBox")
         self.cones_checkBox.setEnabled(True)
@@ -57,23 +52,13 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.func_lbl)
 
-        self.func_lineEdit = QLineEdit(self.centralwidget)
-        self.func_lineEdit.setObjectName(u"func_lineEdit")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.func_lineEdit.sizePolicy().hasHeightForWidth())
-        self.func_lineEdit.setSizePolicy(sizePolicy1)
-
-        self.verticalLayout.addWidget(self.func_lineEdit)
-
         self.funcs_frame = QFrame(self.centralwidget)
         self.funcs_frame.setObjectName(u"funcs_frame")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.funcs_frame.sizePolicy().hasHeightForWidth())
-        self.funcs_frame.setSizePolicy(sizePolicy2)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.funcs_frame.sizePolicy().hasHeightForWidth())
+        self.funcs_frame.setSizePolicy(sizePolicy1)
         self.funcs_frame.setMaximumSize(QSize(200, 200))
         self.funcs_frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.funcs_frame.setFrameShadow(QFrame.Shadow.Raised)
@@ -87,8 +72,8 @@ class Ui_MainWindow(object):
 
         self.from_lbl = QLabel(self.centralwidget)
         self.from_lbl.setObjectName(u"from_lbl")
-        sizePolicy2.setHeightForWidth(self.from_lbl.sizePolicy().hasHeightForWidth())
-        self.from_lbl.setSizePolicy(sizePolicy2)
+        sizePolicy1.setHeightForWidth(self.from_lbl.sizePolicy().hasHeightForWidth())
+        self.from_lbl.setSizePolicy(sizePolicy1)
 
         self.verticalLayout.addWidget(self.from_lbl)
 
@@ -152,10 +137,8 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"QweykePlotter", None))
-        self.clear_btn.setText(QCoreApplication.translate("MainWindow", u"Clear", None))
         self.cones_checkBox.setText(QCoreApplication.translate("MainWindow", u"3D Cones", None))
         self.func_lbl.setText(QCoreApplication.translate("MainWindow", u"Current function(s)", None))
-        self.func_lineEdit.setText(QCoreApplication.translate("MainWindow", u"cos(x)", None))
         self.add_btn.setText(QCoreApplication.translate("MainWindow", u"Add function", None))
         self.from_lbl.setText(QCoreApplication.translate("MainWindow", u"From", None))
         self.to_lbl.setText(QCoreApplication.translate("MainWindow", u"To", None))
