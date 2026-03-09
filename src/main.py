@@ -1,5 +1,4 @@
-# .venv\Scripts\pyside6-uic.exe lab_1\gui\mainwindow.ui -o lab_1\gui\mainwindow_ui.py
-
+# .venv\Scripts\pyside6-uic.exe src\gui\res\mainwindow.ui -o src\gui\res\mainwindow_ui.py
 import sys
 
 from PySide6.QtWidgets import QApplication

@@ -165,59 +165,63 @@ def pseudo_cones_3d_style(
     if len(x_vals) < 2:
         return
 
-    # вычисляем ширину конуса из шага по X
     p1 = mapper.math_to_pixels(QPointF(x_vals[0], 0))
     p2 = mapper.math_to_pixels(QPointF(x_vals[1], 0))
     cone_width = abs(p2.x() - p1.x()) * 0.8
 
-    y_zero_px = mapper.math_to_pixels(QPointF(0, 0)).y()
+    if mapper.y_min <= 0 <= mapper.y_max:
+        base_y_math = 0
+    else:
+        base_y_math = mapper.y_min if max(y_vals) >= 0 else mapper.y_max
+
+    base_y_px = mapper.math_to_pixels(QPointF(0, base_y_math)).y()
 
     for x, y in zip(x_vals, y_vals):
-
-        if not np.isfinite(y) or abs(y) < 1e-6:
+        if not np.isfinite(y):
             continue
 
-        # вершина
-        tip_px = mapper.math_to_pixels(QPointF(x, y))
+        tip = mapper.math_to_pixels(QPointF(x, y))
+        base_center = mapper.math_to_pixels(QPointF(x, base_y_math))
 
-        # центр основания
-        base_center_px = mapper.math_to_pixels(QPointF(x, 0))
+        left_x = base_center.x() - cone_width / 2
+        right_x = base_center.x() + cone_width / 2
 
-        left_x = base_center_px.x() - cone_width / 2
-        right_x = base_center_px.x() + cone_width / 2
-
-        # градиент освещения
-        grad = QLinearGradient(left_x, 0, right_x, 0)
-        grad.setColorAt(0.0, color.lighter(150))
-        grad.setColorAt(0.3, color)
-        grad.setColorAt(1.0, color.darker(150))
-
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(grad)
-
-        # тело конуса
-        cone_poly = QPolygonF(
-            [
-                tip_px,
-                QPointF(left_x, y_zero_px),
-                QPointF(right_x, y_zero_px),
-            ]
-        )
-
-        painter.drawPolygon(cone_poly)
-
-        # основание (эллипс)
-        ellipse_h = cone_width * 0.3
-
+        ellipse_h = cone_width * 0.28
         ellipse_rect = QRectF(
             left_x,
-            y_zero_px - ellipse_h / 2,
+            base_y_px - ellipse_h / 2,
             cone_width,
             ellipse_h,
         )
 
-        painter.setBrush(color.darker(180))
-        painter.drawEllipse(ellipse_rect)
+        # --- единая фигура конуса ---
+        path = QPainterPath()
+
+        # Начинаем с вершины
+        path.moveTo(tip)
+
+        # Идем к левому краю основания
+        path.lineTo(left_x, base_y_px)
+
+        # Рисуем дугу основания (от левого края к правому)
+        if y >= 0:  # конус вверх
+            path.arcTo(ellipse_rect, 180, 180)  # от 180° до 360°
+        else:  # конус вниз
+            path.arcTo(ellipse_rect, 180, -180)  # от 180° до 0°
+
+        # Возвращаемся к вершине (замыкаем)
+        path.lineTo(tip)
+        path.closeSubpath()
+
+        # --- градиент всей фигуры ---
+        grad = QLinearGradient(left_x, tip.y(), right_x, base_y_px)
+        grad.setColorAt(0.0, color.lighter(160))
+        grad.setColorAt(0.35, color)
+        grad.setColorAt(1.0, color.darker(160))
+
+        painter.setBrush(grad)
+        # painter.setPen(QPen(color.darker(150), 1))
+        painter.drawPath(path)
 
 
 def function(

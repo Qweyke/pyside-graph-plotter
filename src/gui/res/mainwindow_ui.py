@@ -43,7 +43,7 @@ class Ui_MainWindow(object):
         self.cones_checkBox = QCheckBox(self.centralwidget)
         self.cones_checkBox.setObjectName(u"cones_checkBox")
         self.cones_checkBox.setEnabled(True)
-        self.cones_checkBox.setChecked(False)
+        self.cones_checkBox.setChecked(True)
 
         self.verticalLayout.addWidget(self.cones_checkBox)
 
@@ -84,7 +84,7 @@ class Ui_MainWindow(object):
         self.from_doubleSpinBox.setMaximum(1000.000000000000000)
         self.from_doubleSpinBox.setSingleStep(0.001000000000000)
         self.from_doubleSpinBox.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
-        self.from_doubleSpinBox.setValue(-10.000000000000000)
+        self.from_doubleSpinBox.setValue(10.000000000000000)
 
         self.verticalLayout.addWidget(self.from_doubleSpinBox)
 
@@ -100,7 +100,7 @@ class Ui_MainWindow(object):
         self.to_doubleSpinBox.setMaximum(1000.000000000000000)
         self.to_doubleSpinBox.setSingleStep(0.001000000000000)
         self.to_doubleSpinBox.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
-        self.to_doubleSpinBox.setValue(10.000000000000000)
+        self.to_doubleSpinBox.setValue(10.100000000000000)
 
         self.verticalLayout.addWidget(self.to_doubleSpinBox)
 
@@ -113,7 +113,7 @@ class Ui_MainWindow(object):
         self.func_points_spinBox.setObjectName(u"func_points_spinBox")
         self.func_points_spinBox.setMinimum(5)
         self.func_points_spinBox.setMaximum(10000)
-        self.func_points_spinBox.setValue(100)
+        self.func_points_spinBox.setValue(10)
 
         self.verticalLayout.addWidget(self.func_points_spinBox)
 
