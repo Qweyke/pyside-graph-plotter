@@ -162,19 +162,25 @@ def pseudo_cones_3d_style(
     y_vals,
     color,
 ):
+    # Need at least 2 vals for cone-base
     if len(x_vals) < 2:
+        print("Too few values for 3d-cones drawing")
         return
 
-    p1 = mapper.math_to_pixels(QPointF(x_vals[0], 0))
-    p2 = mapper.math_to_pixels(QPointF(x_vals[1], 0))
-    cone_width = abs(p2.x() - p1.x()) * 0.8
-
+    # Choose point for cone-base
     if mapper.y_min <= 0 <= mapper.y_max:
         base_y_math = 0
+    elif mapper.y_max < 0:
+        base_y_math = mapper.y_max - mapper.y_step * 0.2
     else:
-        base_y_math = mapper.y_min if max(y_vals) >= 0 else mapper.y_max
+        base_y_math = mapper.y_min + mapper.y_step * 0.2
 
     base_y_px = mapper.math_to_pixels(QPointF(0, base_y_math)).y()
+
+    # Calculate cone-base width
+    left_base_p = mapper.math_to_pixels(QPointF(x_vals[0], 0))
+    right_base_p = mapper.math_to_pixels(QPointF(x_vals[1], 0))
+    cone_width = abs(left_base_p.x() - right_base_p.x()) * 0.6
 
     for x, y in zip(x_vals, y_vals):
         if not np.isfinite(y):
@@ -194,20 +200,17 @@ def pseudo_cones_3d_style(
             ellipse_h,
         )
 
-        # --- единая фигура конуса ---
+        # Start drawing path
         path = QPainterPath()
-
-        # Начинаем с вершины
         path.moveTo(tip)
-
-        # Идем к левому краю основания
         path.lineTo(left_x, base_y_px)
 
         # Рисуем дугу основания (от левого края к правому)
         if y >= 0:  # конус вверх
             path.arcTo(ellipse_rect, 180, 180)  # от 180° до 360°
         else:  # конус вниз
-            path.arcTo(ellipse_rect, 180, -180)  # от 180° до 0°
+            path.arcTo(ellipse_rect, 180, 180)
+            path.arcTo(ellipse_rect, 0, 360)  # от 180° до 0°
 
         # Возвращаемся к вершине (замыкаем)
         path.lineTo(tip)

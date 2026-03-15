@@ -40,6 +40,12 @@ class CoordinateMapper:
         if new_y_max is not None:
             self.y_max = new_y_max
 
+        if self.y_max < 0:
+            self.y_max = 0
+
+        elif self.y_min > 0:
+            self.y_min = 0
+
         raw_dx = (self.x_max - self.x_min) if self.x_max != self.x_min else 1.0
         raw_dy = (self.y_max - self.y_min) if self.y_max != self.y_min else 1.0
 

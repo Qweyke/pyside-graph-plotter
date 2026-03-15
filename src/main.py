@@ -1,4 +1,6 @@
 # .venv\Scripts\pyside6-uic.exe src\gui\res\mainwindow.ui -o src\gui\res\mainwindow_ui.py
+# .venv\Scripts\pyside6-designer.exe src\gui\res\mainwindow.ui
+
 import sys
 
 from PySide6.QtWidgets import QApplication

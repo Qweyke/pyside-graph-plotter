@@ -38,8 +38,9 @@ class PlotBuilder(QWidget):
         painter.drawPixmap(QPointF(0, 0), self._cached_scene)
 
     def _get_plotting_rect(self):
-        margin_x = int(self.width() * 0.02)
+        margin_x = int(self.width() * 0.03)
         margin_y = int(self.height() * 0.02)
+
         plot_rect = self.contentsRect().adjusted(
             margin_x, margin_y, -margin_x, -margin_y
         )
